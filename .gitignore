@@ -1,0 +1,20 @@
+# sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# editores
+.vscode/
+.idea/
+*.swp
+*~
+
+# configuração local do Claude Code (launch.json fica versionado)
+.claude/settings.local.json
+
+# malhas originais: baixadas sob demanda do NIH 3D, ver README
+*.stl
+*.glb
+*.wrl
+*.x3d

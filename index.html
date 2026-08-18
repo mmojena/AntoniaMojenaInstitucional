@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Antônia Mojena — Neuropsicopedagoga Clínica | Sinop-MT</title>
+<meta name="description" content="Atendimento terapêutico especializado para crianças, adolescentes e famílias. Neuropsicopedagogia clínica, Neuropsicanálise e Terapia ABA em Sinop-MT.">
+<meta name="theme-color" content="#060a08">
+<meta property="og:title" content="Antônia Mojena — Neuropsicopedagoga Clínica">
+<meta property="og:description" content="Cuidando da sua saúde emocional com acolhimento e propósito.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23081210'/%3E%3Cpath d='M20 26v-3.4a7 7 0 0 0 3.2-5.9c0-4-3.3-7.2-7.4-7.2S8.4 12.7 8.4 16.7c0 1.5.5 2.9 1.3 4L8 22.9h2.5V26' fill='none' stroke='%238FB27C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=6">
+</head>
+<body>
+
+<!-- ============ BOOT / CALIBRAÇÃO ============ -->
+<div id="boot" class="boot">
+  <div class="boot__inner">
+    <div class="boot__mark"><span class="wordmark">Antônia Mojena</span></div>
+    <div class="boot__bar"><i id="bootBar"></i></div>
+    <div class="boot__status mono">
+      <span id="bootMsg">INICIANDO MONITOR NEURAL</span>
+      <span id="bootPct">0%</span>
+    </div>
+  </div>
+</div>
+<noscript><style>
+  .boot{display:none}
+  .rv{opacity:1;transform:none;filter:none}
+  .hud,.nav,.sceneidx,.glow{opacity:1;transform:none}
+  .wa-float{opacity:1;transform:none;pointer-events:auto}
+</style></noscript>
+<script>
+  /* rede de segurança: se algo falhar ao carregar, a tela de boot nunca trava a página */
+  setTimeout(function () {
+    var b = document.getElementById('boot');
+    if (b && !b.classList.contains('is-done')) {
+      b.classList.add('is-done');
+      document.body.classList.add('is-booted');
+      document.querySelectorAll('.rv').forEach(function (e) { e.classList.add('is-in'); });
+    }
+  }, 6000);
+</script>
+
+<!-- ============ CÉREBRO (WebGL) ============ -->
+<div class="glow" aria-hidden="true"></div>
+<canvas id="brain" class="brain-canvas" aria-hidden="true"></canvas>
+<div class="veil" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ HUD SUPERIOR ============ -->
+<header class="hud" aria-hidden="true">
+  <div class="hud__row mono">
+    <span class="hud__live"><i class="dot"></i>MONITOR_NEURAL <em>// AO VIVO</em></span>
+    <span class="hud__cell">NEURÔNIOS <b>86.000.000.000</b></span>
+    <span class="hud__cell">PARTÍCULAS <b id="hudParts">0</b></span>
+    <span class="hud__cell">SINAPSES <b id="hudFire">0,00 M/S</b></span>
+    <span class="hud__cell hud__cell--focus">FOCO <b id="hudFocus">DESENVOLVIMENTO_INFANTIL</b></span>
+    <canvas id="wave" class="hud__wave" width="320" height="26"></canvas>
+  </div>
+</header>
+
+<!-- ============ NAVEGAÇÃO ============ -->
+<nav class="nav">
+  <a class="nav__brand" href="#inicio" aria-label="Antônia Mojena — início">
+    <img src="assets/logo.png" alt="" class="nav__logo" onerror="this.remove()">
+    <span class="nav__brandtxt">
+      <span class="wordmark">Antônia Mojena</span>
+      <span class="mono nav__sub">NEUROPSICOPEDAGOGA CLÍNICA</span>
+    </span>
+  </a>
+  <div class="nav__links mono">
+    <a href="#inicio">Início</a>
+    <a href="#indicacao">Para quem é</a>
+    <a href="#cuidado">Atendimento</a>
+    <a href="#sobre">Sobre mim</a>
+    <a href="#contato">Contato</a>
+  </div>
+  <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menuMobile">
+    <span></span><span></span>
+  </button>
+</nav>
+
+<!-- ============ MENU MOBILE ============ -->
+<div class="menu" id="menuMobile">
+  <nav class="menu__links">
+    <a href="#inicio"><span class="mono">01</span>Início</a>
+    <a href="#indicacao"><span class="mono">02</span>Para quem é</a>
+    <a href="#cuidado"><span class="mono">03</span>Atendimento</a>
+    <a href="#protocolo"><span class="mono">04</span>Como funciona</a>
+    <a href="#sobre"><span class="mono">05</span>Sobre mim</a>
+    <a href="#contato"><span class="mono">06</span>Contato</a>
+  </nav>
+  <a class="btn btn--primary menu__cta" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" class="ico-wa" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
+    <span>Agende agora <em>clique aqui</em></span>
+  </a>
+  <p class="menu__meta mono">(66) 99200-7061 · SINOP — MT</p>
+</div>
+
+<main>
+
+  <!-- ============ 01 — INÍCIO ============ -->
+  <section class="scene scene--split" id="inicio" data-scene="0" data-focus="DESENVOLVIMENTO_INFANTIL">
+    <div class="scene__col scene__col--text">
+      <p class="eyebrow mono rv">&gt; INÍCIO <i class="caret">_</i></p>
+      <h1 class="display rv" data-d="1">
+        Cuidando da sua saúde emocional com
+        <span class="hl">acolhimento e propósito.</span>
+      </h1>
+      <p class="lede rv" data-d="2">
+        Atendimento terapêutico especializado para crianças, adolescentes e famílias,
+        com foco no desenvolvimento emocional, comportamental e na qualidade de vida.
+      </p>
+      <div class="rv" data-d="3">
+        <a class="btn btn--primary" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" class="ico-wa" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
+          <span>Agende agora <em>clique aqui</em></span>
+        </a>
+      </div>
+      <ul class="meta mono rv" data-d="4">
+        <li><span>ESPECIALIDADE</span> NEUROPSICOPEDAGOGIA · ABA</li>
+        <li><span>STATUS</span> <b class="ok">AGENDA ABERTA</b></li>
+      </ul>
+    </div>
+    <div class="scene__col scene__col--void" aria-hidden="true"></div>
+    <div class="scrollcue mono" aria-hidden="true"><i></i>ROLE PARA EXPLORAR</div>
+  </section>
+
+  <!-- ============ 02 — PARA QUEM É ============ -->
+  <section class="scene scene--split reverse" id="indicacao" data-scene="1" data-focus="MAPEAMENTO_DE_PERFIL">
+    <div class="scene__col scene__col--void" aria-hidden="true"></div>
+    <div class="scene__col scene__col--text">
+      <p class="eyebrow mono rv">&gt; INDICAÇÃO <i class="caret">_</i></p>
+      <h2 class="title rv" data-d="1">Este atendimento é indicado para:</h2>
+      <ul class="checklist">
+        <li class="rv" data-d="2"><span class="checklist__n mono">01</span><p><b>Crianças com dificuldades de aprendizagem</b> ou comportamento</p></li>
+        <li class="rv" data-d="3"><span class="checklist__n mono">02</span><p>Adolescentes enfrentando <b>desafios emocionais</b></p></li>
+        <li class="rv" data-d="4"><span class="checklist__n mono">03</span><p>Pais que precisam de orientação e <b>apoio familiar</b></p></li>
+        <li class="rv" data-d="5"><span class="checklist__n mono">04</span><p><b>Pessoas com ansiedade</b> ou dificuldades emocionais</p></li>
+        <li class="rv" data-d="6"><span class="checklist__n mono">05</span><p>Famílias que <b>desejam melhorar</b> a convivência e a comunicação</p></li>
+        <li class="rv" data-d="7"><span class="checklist__n mono">06</span><p>Quem busca autoconhecimento e <b>equilíbrio emocional</b></p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 03 — O QUE TRATO ============ -->
+  <section class="scene scene--center" id="cuidado" data-scene="2" data-focus="INTERVENCAO_CLINICA">
+    <div class="scene__head">
+      <p class="eyebrow mono rv">&gt; CUIDADO <i class="caret">_</i></p>
+      <h2 class="title title--center rv" data-d="1">Problemas que ajudo a resolver</h2>
+    </div>
+    <div class="cards">
+      <article class="card rv" data-d="2">
+        <span class="card__idx mono">01</span>
+        <svg class="card__ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M31 40v-5.2a11 11 0 0 0 5-9.2c0-6.1-5.1-11-11.4-11S13.2 19.5 13.2 25.6c0 2.3.7 4.4 2 6.2l-2.6 3.4h3.8V40"/><path d="M20 25.5c1.2-2 4.4-2.3 5.2.2.7 2.3-2.6 2.8-2.3 4.6.2 1.6 2.6 2 4-.6"/></svg>
+        <h3>Ansiedade</h3>
+        <p>Auxílio no controle dos sintomas, promovendo mais calma, segurança e equilíbrio emocional.</p>
+      </article>
+      <article class="card rv" data-d="3">
+        <span class="card__idx mono">02</span>
+        <svg class="card__ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 12h11a5 5 0 0 1 5 5v20a4 4 0 0 0-4-4H10Z"/><path d="M42 12H31a5 5 0 0 0-5 5v20a4 4 0 0 1 4-4h12Z"/><path d="M33 20h5M33 26h5"/></svg>
+        <h3>Dificuldades de aprendizagem</h3>
+        <p>Intervenções que ajudam no desenvolvimento cognitivo e no desempenho escolar.</p>
+      </article>
+      <article class="card rv" data-d="4">
+        <span class="card__idx mono">03</span>
+        <svg class="card__ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M14 20a6 6 0 0 1 1.6-11.8A8 8 0 0 1 31 9.5 6 6 0 0 1 33 20Z"/><path d="M21 25l-3 6h6l-4 8"/><path d="M31 25l-2 5"/></svg>
+        <h3>Problemas comportamentais</h3>
+        <p>Trabalho focado na autorregulação e na melhoria das atitudes no dia a dia.</p>
+      </article>
+      <article class="card rv" data-d="5">
+        <span class="card__idx mono">04</span>
+        <svg class="card__ico" viewBox="0 0 48 48" aria-hidden="true"><circle cx="16" cy="15" r="5"/><circle cx="32" cy="15" r="5"/><path d="M7 38v-4a9 9 0 0 1 9-9 9 9 0 0 1 7 3.3"/><path d="M25 38v-4a9 9 0 0 1 9-9 9 9 0 0 1 9 9v4"/></svg>
+        <h3>Conflitos familiares</h3>
+        <p>Mediação e orientação para fortalecer vínculos e melhorar a comunicação.</p>
+      </article>
+      <article class="card rv" data-d="6">
+        <span class="card__idx mono">05</span>
+        <svg class="card__ico" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="9" width="16" height="30" rx="8"/><circle cx="14" cy="19" r="3.2"/><path d="M9 34a5.5 5.5 0 0 1 10 0"/><circle cx="33" cy="19" r="3.6"/><path d="M26 39v-3a7 7 0 0 1 14 0v3"/></svg>
+        <h3>Baixa autoestima</h3>
+        <p>Desenvolvimento da confiança e da valorização pessoal.</p>
+      </article>
+      <article class="card rv" data-d="7">
+        <span class="card__idx mono">06</span>
+        <svg class="card__ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M30 41v-6l5-4a13 13 0 1 0-22-9.3V25l-3.5 4.5H14V35a3 3 0 0 0 3 3h4"/><circle cx="22" cy="17" r="2"/><circle cx="30" cy="23" r="2"/><circle cx="20" cy="26" r="2"/><path d="M23.7 18.2 28.4 22M21.4 24.2l-.7-5.2"/></svg>
+        <h3>Transtornos do neurodesenvolvimento</h3>
+        <p>Acompanhamento especializado com estratégias adaptadas para cada caso.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 04 — PROTOCOLO ============ -->
+  <section class="scene scene--split" id="protocolo" data-scene="3" data-focus="PLANO_TERAPEUTICO">
+    <div class="scene__col scene__col--text">
+      <p class="eyebrow mono rv">&gt; PROTOCOLO <i class="caret">_</i></p>
+      <h2 class="title rv" data-d="1">Como funciona o atendimento</h2>
+      <ol class="steps">
+        <li class="rv" data-d="2"><span class="steps__n">01</span><div><h3>Sessões com horário marcado</h3><p>Agenda organizada para que cada encontro tenha o tempo que você precisa.</p></div></li>
+        <li class="rv" data-d="3"><span class="steps__n">02</span><div><h3>Atendimento individualizado</h3><p>Cada pessoa é única — o plano é construído a partir da sua história.</p></div></li>
+        <li class="rv" data-d="4"><span class="steps__n">03</span><div><h3>Escuta acolhedora e sem julgamentos</h3><p>Um espaço seguro para falar, sentir e reorganizar as emoções.</p></div></li>
+        <li class="rv" data-d="5"><span class="steps__n">04</span><div><h3>Plano terapêutico personalizado</h3><p>Estratégias práticas, acompanhamento contínuo e orientação para a família.</p></div></li>
+      </ol>
+      <div class="rv" data-d="6">
+        <a class="btn btn--ghost" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Gostaria%20de%20entender%20como%20funciona%20o%20atendimento." target="_blank" rel="noopener">
+          <span>Tirar uma dúvida no WhatsApp</span>
+        </a>
+      </div>
+    </div>
+    <div class="scene__col scene__col--void" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============ 05 — SOBRE ============ -->
+  <section class="scene scene--split reverse" id="sobre" data-scene="4" data-focus="ANTONIA_MOJENA">
+    <div class="scene__col scene__col--media">
+      <figure class="portrait rv" data-d="1">
+        <img src="assets/antonia.jpg" alt="Antônia Mojena" onerror="this.closest('.portrait').classList.add('is-empty');this.remove()">
+        <span class="portrait__hint mono">coloque a foto em<br><b>assets/antonia.jpg</b></span>
+        <figcaption class="mono">ANTÔNIA_MOJENA · SINOP-MT</figcaption>
+      </figure>
+    </div>
+    <div class="scene__col scene__col--text">
+      <p class="eyebrow mono rv">&gt; SOBRE <i class="caret">_</i></p>
+      <h2 class="title rv" data-d="1">Antônia Mojena</h2>
+      <p class="creds mono rv" data-d="2">NEUROPSICOPEDAGOGA CLÍNICA · NEUROPSICANALISTA CLÍNICA · TERAPEUTA ABA</p>
+      <div class="prose">
+        <p class="rv" data-d="3">Sou graduada em Pedagogia e Teologia, especialista em Neuropsicopedagogia, Neuropsicanálise e Terapia ABA.</p>
+        <p class="rv" data-d="4">Atuo com foco na saúde mental, emocional e comportamental, atendendo crianças, adolescentes e famílias que enfrentam desafios no desenvolvimento, comportamento e aprendizagem.</p>
+        <p class="rv" data-d="5">Minha prática integra diferentes abordagens terapêuticas, buscando compreender o indivíduo de forma completa — mente, emoções e história de vida.</p>
+        <p class="rv" data-d="6">Acredito em um atendimento humanizado, baseado na empatia, respeito e acolhimento, onde cada pessoa encontra um espaço seguro para se reorganizar emocionalmente, fortalecer sua autoestima e reconstruir seu equilíbrio.</p>
+        <p class="rv" data-d="7">Também desenvolvo projetos de apoio emocional e atendimento voluntário, com o propósito de levar cuidado e esperança para quem mais precisa.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 — CONTATO ============ -->
+  <section class="scene scene--center scene--final" id="contato" data-scene="5" data-focus="AGENDA_ABERTA">
+    <div class="final">
+      <p class="eyebrow mono rv">&gt; CONTATO <i class="caret">_</i></p>
+      <h2 class="display display--center rv" data-d="1">Vamos conversar sobre<br><span class="hl">o próximo passo.</span></h2>
+      <p class="lede lede--center rv" data-d="2">Atendimento com hora marcada, para crianças e adultos, em Sinop — MT.</p>
+      <div class="rv" data-d="3">
+        <a class="btn btn--primary btn--lg" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" class="ico-wa" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
+          <span>Agende agora <em>clique aqui</em></span>
+        </a>
+      </div>
+      <div class="contact-grid rv" data-d="4">
+        <a class="contact" href="tel:+5566992007061">
+          <span class="mono">TELEFONE</span>
+          <b>(66) 99200-7061</b>
+        </a>
+        <div class="contact">
+          <span class="mono">LOCALIZAÇÃO</span>
+          <b>Sinop — MT</b>
+        </div>
+        <div class="contact">
+          <span class="mono">HORÁRIO</span>
+          <b>Atendimento com hora marcada</b>
+        </div>
+      </div>
+    </div>
+    <footer class="foot mono">
+      <span class="wordmark foot__mark">Antônia Mojena</span>
+      <span>© <span id="yr">2026</span> — Neuropsicopedagoga clínica · Neuropsicanalista clínica · Terapeuta ABA</span>
+    </footer>
+  </section>
+
+</main>
+
+<!-- ============ ÍNDICE DE CENAS ============ -->
+<aside class="sceneidx mono" aria-hidden="true">
+  <span class="sceneidx__bar"><i id="sceneProg"></i></span>
+  <ol id="sceneDots">
+    <li>01</li><li>02</li><li>03</li><li>04</li><li>05</li><li>06</li>
+  </ol>
+</aside>
+
+<!-- ============ WHATSAPP FLUTUANTE ============ -->
+<a class="wa-float" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
+  <span>Agende agora</span>
+</a>
+
+<script src="js/brain.js?v=6"></script>
+<script src="js/main.js?v=6"></script>
+</body>
+</html>
