@@ -1,19 +1,30 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="luz">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Antônia Mojena — Neuropsicopedagoga Clínica | Sinop-MT</title>
 <meta name="description" content="Atendimento terapêutico especializado para crianças, adolescentes e famílias. Neuropsicopedagogia clínica, Neuropsicanálise e Terapia ABA em Sinop-MT.">
-<meta name="theme-color" content="#060a08">
+<meta name="theme-color" content="#FBF8FE">
 <meta property="og:title" content="Antônia Mojena — Neuropsicopedagoga Clínica">
 <meta property="og:description" content="Cuidando da sua saúde emocional com acolhimento e propósito.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23081210'/%3E%3Cpath d='M20 26v-3.4a7 7 0 0 0 3.2-5.9c0-4-3.3-7.2-7.4-7.2S8.4 12.7 8.4 16.7c0 1.5.5 2.9 1.3 4L8 22.9h2.5V26' fill='none' stroke='%238FB27C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236A34B4'/%3E%3Cpath d='M20 26v-3.4a7 7 0 0 0 3.2-5.9c0-4-3.3-7.2-7.4-7.2S8.4 12.7 8.4 16.7c0 1.5.5 2.9 1.3 4L8 22.9h2.5V26' fill='none' stroke='%23FBF8FE' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Great+Vibes&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=6">
+<link rel="stylesheet" href="css/styles.css?v=17">
+<script>
+  /* Roda antes do CSS pintar: evita o flash do tema errado no carregamento. */
+  (function () {
+    var t;
+    try { t = localStorage.getItem('am-tema'); } catch (e) {}
+    if (t !== 'noite' && t !== 'luz') t = 'luz';
+    document.documentElement.setAttribute('data-theme', t);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', t === 'noite' ? '#08060F' : '#FBF8FE');
+  })();
+</script>
 </head>
 <body>
 
@@ -21,9 +32,10 @@
 <div id="boot" class="boot">
   <div class="boot__inner">
     <div class="boot__mark"><span class="wordmark">Antônia Mojena</span></div>
+    <p class="boot__sub mono">NEUROPSICOPEDAGOGA CLÍNICA · SINOP — MT</p>
     <div class="boot__bar"><i id="bootBar"></i></div>
     <div class="boot__status mono">
-      <span id="bootMsg">INICIANDO MONITOR NEURAL</span>
+      <span id="bootMsg">PREPARANDO O ESPAÇO</span>
       <span id="bootPct">0%</span>
     </div>
   </div>
@@ -53,14 +65,14 @@
 <div class="grain" aria-hidden="true"></div>
 
 <!-- ============ HUD SUPERIOR ============ -->
-<header class="hud" aria-hidden="true">
+<header class="hud">
   <div class="hud__row mono">
-    <span class="hud__live"><i class="dot"></i>MONITOR_NEURAL <em>// AO VIVO</em></span>
-    <span class="hud__cell">NEURÔNIOS <b>86.000.000.000</b></span>
-    <span class="hud__cell">PARTÍCULAS <b id="hudParts">0</b></span>
-    <span class="hud__cell">SINAPSES <b id="hudFire">0,00 M/S</b></span>
-    <span class="hud__cell hud__cell--focus">FOCO <b id="hudFocus">DESENVOLVIMENTO_INFANTIL</b></span>
-    <canvas id="wave" class="hud__wave" width="320" height="26"></canvas>
+    <span class="hud__live"><i class="dot"></i>AGENDA ABERTA</span>
+    <span class="hud__cell">ATENDIMENTO COM HORA MARCADA</span>
+    <span class="hud__cell">CRIANÇAS · ADOLESCENTES · FAMÍLIAS</span>
+    <span class="hud__cell hud__cell--local">SINOP — MT</span>
+    <a class="hud__tel" href="tel:+5566992007061">(66) 99200-7061</a>
+    <canvas id="wave" class="hud__wave" width="320" height="26" aria-hidden="true"></canvas>
   </div>
 </header>
 
@@ -80,6 +92,10 @@
     <a href="#sobre">Sobre mim</a>
     <a href="#contato">Contato</a>
   </div>
+  <button class="temaBtn" id="temaBtn" type="button" aria-label="Alternar entre tema claro e escuro" title="Alternar tema">
+    <svg viewBox="0 0 24 24" class="temaBtn__sol" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></svg>
+    <svg viewBox="0 0 24 24" class="temaBtn__lua" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/></svg>
+  </button>
   <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menuMobile">
     <span></span><span></span>
   </button>
@@ -95,17 +111,21 @@
     <a href="#sobre"><span class="mono">05</span>Sobre mim</a>
     <a href="#contato"><span class="mono">06</span>Contato</a>
   </nav>
-  <a class="btn btn--primary menu__cta" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener">
+  <a class="btn btn--primary menu__cta" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia%21%20Vim%20pelo%20seu%20site%20e%20gostaria%20de%20agendar%20uma%20conversa.%20Quais%20hor%C3%A1rios%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener">
     <svg viewBox="0 0 24 24" class="ico-wa" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
     <span>Agende agora <em>clique aqui</em></span>
   </a>
   <p class="menu__meta mono">(66) 99200-7061 · SINOP — MT</p>
+  <button class="temaLinha mono" id="temaBtnMob" type="button">
+    <span class="temaLinha__txt">Tema escuro</span>
+    <span class="temaLinha__pino" aria-hidden="true"><i></i></span>
+  </button>
 </div>
 
 <main>
 
   <!-- ============ 01 — INÍCIO ============ -->
-  <section class="scene scene--split" id="inicio" data-scene="0" data-focus="DESENVOLVIMENTO_INFANTIL">
+  <section class="scene scene--split" id="inicio" data-scene="0">
     <div class="scene__col scene__col--text">
       <p class="eyebrow mono rv">&gt; INÍCIO <i class="caret">_</i></p>
       <h1 class="display rv" data-d="1">
@@ -117,14 +137,14 @@
         com foco no desenvolvimento emocional, comportamental e na qualidade de vida.
       </p>
       <div class="rv" data-d="3">
-        <a class="btn btn--primary" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener">
+        <a class="btn btn--primary" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia%21%20Vim%20pelo%20seu%20site%20e%20me%20identifiquei%20com%20a%20forma%20como%20voc%C3%AA%20descreve%20o%20atendimento.%20Gostaria%20de%20agendar%20uma%20conversa%20%E2%80%94%20pode%20me%20contar%20como%20funciona%20o%20primeiro%20encontro%20e%20quais%20hor%C3%A1rios%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" class="ico-wa" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
           <span>Agende agora <em>clique aqui</em></span>
         </a>
       </div>
       <ul class="meta mono rv" data-d="4">
-        <li><span>ESPECIALIDADE</span> NEUROPSICOPEDAGOGIA · ABA</li>
-        <li><span>STATUS</span> <b class="ok">AGENDA ABERTA</b></li>
+        <li><span>ESPECIALIDADE</span> NEUROPSICOPEDAGOGIA CLÍNICA</li>
+        <li><span>ABORDAGENS</span> NEUROPSICANÁLISE · TERAPIA ABA</li>
       </ul>
     </div>
     <div class="scene__col scene__col--void" aria-hidden="true"></div>
@@ -132,7 +152,7 @@
   </section>
 
   <!-- ============ 02 — PARA QUEM É ============ -->
-  <section class="scene scene--split reverse" id="indicacao" data-scene="1" data-focus="MAPEAMENTO_DE_PERFIL">
+  <section class="scene scene--split reverse" id="indicacao" data-scene="1">
     <div class="scene__col scene__col--void" aria-hidden="true"></div>
     <div class="scene__col scene__col--text">
       <p class="eyebrow mono rv">&gt; INDICAÇÃO <i class="caret">_</i></p>
@@ -149,9 +169,9 @@
   </section>
 
   <!-- ============ 03 — O QUE TRATO ============ -->
-  <section class="scene scene--center" id="cuidado" data-scene="2" data-focus="INTERVENCAO_CLINICA">
+  <section class="scene scene--center" id="cuidado" data-scene="2">
     <div class="scene__head">
-      <p class="eyebrow mono rv">&gt; CUIDADO <i class="caret">_</i></p>
+      <p class="eyebrow mono rv">&gt; O QUE EU TRATO <i class="caret">_</i></p>
       <h2 class="title title--center rv" data-d="1">Problemas que ajudo a resolver</h2>
     </div>
     <div class="cards">
@@ -195,9 +215,9 @@
   </section>
 
   <!-- ============ 04 — PROTOCOLO ============ -->
-  <section class="scene scene--split" id="protocolo" data-scene="3" data-focus="PLANO_TERAPEUTICO">
+  <section class="scene scene--split" id="protocolo" data-scene="3">
     <div class="scene__col scene__col--text">
-      <p class="eyebrow mono rv">&gt; PROTOCOLO <i class="caret">_</i></p>
+      <p class="eyebrow mono rv">&gt; COMO FUNCIONA <i class="caret">_</i></p>
       <h2 class="title rv" data-d="1">Como funciona o atendimento</h2>
       <ol class="steps">
         <li class="rv" data-d="2"><span class="steps__n">01</span><div><h3>Sessões com horário marcado</h3><p>Agenda organizada para que cada encontro tenha o tempo que você precisa.</p></div></li>
@@ -206,7 +226,7 @@
         <li class="rv" data-d="5"><span class="steps__n">04</span><div><h3>Plano terapêutico personalizado</h3><p>Estratégias práticas, acompanhamento contínuo e orientação para a família.</p></div></li>
       </ol>
       <div class="rv" data-d="6">
-        <a class="btn btn--ghost" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Gostaria%20de%20entender%20como%20funciona%20o%20atendimento." target="_blank" rel="noopener">
+        <a class="btn btn--ghost" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia%21%20Estava%20no%20seu%20site%20lendo%20como%20funciona%20o%20atendimento%20e%20fiquei%20com%20uma%20d%C3%BAvida.%20Pode%20me%20ajudar%3F" target="_blank" rel="noopener">
           <span>Tirar uma dúvida no WhatsApp</span>
         </a>
       </div>
@@ -215,12 +235,12 @@
   </section>
 
   <!-- ============ 05 — SOBRE ============ -->
-  <section class="scene scene--split reverse" id="sobre" data-scene="4" data-focus="ANTONIA_MOJENA">
+  <section class="scene scene--split reverse" id="sobre" data-scene="4">
     <div class="scene__col scene__col--media">
       <figure class="portrait rv" data-d="1">
         <img src="assets/antonia.jpg" alt="Antônia Mojena" onerror="this.closest('.portrait').classList.add('is-empty');this.remove()">
-        <span class="portrait__hint mono">coloque a foto em<br><b>assets/antonia.jpg</b></span>
-        <figcaption class="mono">ANTÔNIA_MOJENA · SINOP-MT</figcaption>
+        <span class="portrait__hint mono">a foto entra aqui<br><b>assets/antonia.jpg</b></span>
+        <figcaption class="mono">ANTÔNIA MOJENA · SINOP — MT</figcaption>
       </figure>
     </div>
     <div class="scene__col scene__col--text">
@@ -238,13 +258,13 @@
   </section>
 
   <!-- ============ 06 — CONTATO ============ -->
-  <section class="scene scene--center scene--final" id="contato" data-scene="5" data-focus="AGENDA_ABERTA">
+  <section class="scene scene--center scene--final" id="contato" data-scene="5">
     <div class="final">
       <p class="eyebrow mono rv">&gt; CONTATO <i class="caret">_</i></p>
       <h2 class="display display--center rv" data-d="1">Vamos conversar sobre<br><span class="hl">o próximo passo.</span></h2>
       <p class="lede lede--center rv" data-d="2">Atendimento com hora marcada, para crianças e adultos, em Sinop — MT.</p>
       <div class="rv" data-d="3">
-        <a class="btn btn--primary btn--lg" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener">
+        <a class="btn btn--primary btn--lg" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia%21%20Li%20seu%20site%20inteiro%20e%20gostaria%20de%20dar%20o%20pr%C3%B3ximo%20passo.%20Podemos%20agendar%20uma%20conversa%3F%20Me%20conta%2C%20por%20favor%2C%20como%20funciona%20o%20primeiro%20encontro%20e%20quais%20hor%C3%A1rios%20est%C3%A3o%20dispon%C3%ADveis." target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" class="ico-wa" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
           <span>Agende agora <em>clique aqui</em></span>
         </a>
@@ -281,12 +301,12 @@
 </aside>
 
 <!-- ============ WHATSAPP FLUTUANTE ============ -->
-<a class="wa-float" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia!%20Vim%20pelo%20site%20e%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+<a class="wa-float" href="https://wa.me/5566992007061?text=Ol%C3%A1%2C%20Ant%C3%B4nia%21%20Vim%20pelo%20seu%20site%20e%20gostaria%20de%20agendar%20uma%20conversa.%20Quais%20hor%C3%A1rios%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.69-1.42 1.32-1.96 1.36-.5.04-.98.22-3.3-.69-2.77-1.09-4.53-3.92-4.67-4.1-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.96-2.3c.25-.27.55-.34.73-.34h.52c.17 0 .4-.06.62.48.24.57.8 1.97.87 2.11.07.14.12.31.02.49-.09.18-.14.29-.28.45l-.42.48c-.14.14-.28.29-.12.57.16.27.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.27.14.43.12.59-.07.16-.18.68-.79.86-1.06.18-.27.36-.23.61-.14.25.09 1.6.75 1.87.89.27.14.46.2.53.32.07.11.07.65-.17 1.34Z"/></svg>
   <span>Agende agora</span>
 </a>
 
-<script src="js/brain.js?v=6"></script>
-<script src="js/main.js?v=6"></script>
+<script src="js/brain.js?v=17"></script>
+<script src="js/main.js?v=17"></script>
 </body>
 </html>

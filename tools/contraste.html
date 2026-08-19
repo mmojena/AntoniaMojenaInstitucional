@@ -1,0 +1,149 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>contraste do texto sobre o cérebro</title>
+<body style="background:#fff;margin:0;font:12px monospace">
+<pre id="out">medindo…</pre>
+<script src="../js/brain.js"></script>
+<script>
+/* Verificação de legibilidade sem depender do navegador compor a tela.
+   Renderiza o cérebro num canvas de tamanho FIXO com os parâmetros da primeira
+   cena no celular, recompõe por cima as mesmas camadas de véu que o CSS aplica
+   e mede a razão de contraste WCAG entre a cor do texto e o pior pixel de fundo. */
+
+var W = 390, H = 780;                 // viewport de celular
+var BLOCO = { x: 20, y: 150, w: 350, h: 430 };  // bloco de texto da primeira cena
+var INSET = { x: 24, y: 30 };         // .scene__col--text::before { inset:-30px -24px }
+
+var TEMAS = {
+  luz: {
+    fundo: [251, 248, 254],
+    texto: [26, 16, 41],
+    texto2: [76, 65, 102],   // --txt-mut: mono de 8,5px sobre o cérebro
+    veilRGB: [251, 248, 254],
+    veilCena: 0.12 * 0.72,            // --veil da cena 01 no celular x --veil-k
+    pal: { modo: 'luz', colA: [0.29, 0.11, 0.56], colB: [0.46, 0.30, 0.12], flash: [0.62, 0.20, 0.86], gain: 3.00 },
+    // camadas do CSS: [raioX%, raioY%, cx%, cy%, [[parada, alfa], ...]]
+    camadas: [
+      [1.15, 0.78, 0.5, 0.46, [[0, .34], [.42, .30], [.72, .19], [1, 0]]],
+      [1.50, 1.08, 0.5, 0.46, [[0, .26], [.55, .22], [.80, .12], [1, 0]]],
+      'plano:.26'
+    ]
+  },
+  noite: {
+    fundo: [8, 6, 15],
+    texto: [237, 233, 247],
+    texto2: [201, 191, 224],
+    veilRGB: [8, 6, 15],
+    veilCena: 0.12 * 1.0,
+    pal: { modo: 'aditivo', colA: [0.50, 0.24, 0.95], colB: [0.98, 0.84, 0.56], flash: [1, .95, .88], gain: 0.80 },
+    camadas: [
+      [1.15, 0.78, 0.5, 0.46, [[0, .75], [.42, .65], [.72, .34], [1, 0]]],
+      [1.50, 1.08, 0.5, 0.46, [[0, .53], [.55, .44], [.80, .24], [1, 0]]]
+    ]
+  }
+};
+
+function alfaNaParada(paradas, t) {
+  if (t <= paradas[0][0]) return paradas[0][1];
+  for (var i = 1; i < paradas.length; i++) {
+    if (t <= paradas[i][0]) {
+      var a = paradas[i - 1], b = paradas[i];
+      var k = (t - a[0]) / (b[0] - a[0]);
+      return a[1] + (b[1] - a[1]) * k;
+    }
+  }
+  return paradas[paradas.length - 1][1];
+}
+
+function relLum(c) {
+  var v = c.map(function (x) {
+    x /= 255;
+    return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+}
+function razao(a, b) {
+  var la = relLum(a), lb = relLum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+function medir(nome, f) {
+  var T = TEMAS[nome];
+  var cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  var nb = new NeuroBrain(cv, { gain: T.pal.gain, maxDPR: 1 });
+  nb.canvas.width = W; nb.canvas.height = H;
+  nb.gl.viewport(0, 0, W, H);
+  nb.aspect = W / H;
+  nb.tema(T.pal);
+  nb.build(GEO);
+  // cena 01 no celular: sceneParams() com small()=true e deitado()=false
+  nb.set({ rotX: 0.12, rotY: 1.15, scale: 1.00 * 0.82, offX: 0, offY: 0.06,
+           disperse: 0, opacity: 1.00 * 0.85, size: 2.50, focus: 0 });
+  for (var k = 0; k < 40; k++) nb.frame(0.05);
+
+  var px = new Uint8Array(W * H * 4);
+  nb.gl.readPixels(0, 0, W, H, nb.gl.RGBA, nb.gl.UNSIGNED_BYTE, px);
+
+  // caixa do véu = bloco de texto + inset negativo
+  var bx = BLOCO.x - INSET.x, by = BLOCO.y - INSET.y,
+      bw = BLOCO.w + INSET.x * 2, bh = BLOCO.h + INSET.y * 2;
+
+  var pior = 99, pior2 = 99, soma = 0, n = 0, piorEm = null;
+  for (var y = BLOCO.y; y < BLOCO.y + BLOCO.h; y++) {
+    for (var x = BLOCO.x; x < BLOCO.x + BLOCO.w; x++) {
+      var i = ((H - 1 - y) * W + x) * 4;          // readPixels vem de baixo p/ cima
+      var a = px[i + 3] / 255;
+      var cor = [px[i] + T.fundo[0] * (1 - a),
+                 px[i + 1] + T.fundo[1] * (1 - a),
+                 px[i + 2] + T.fundo[2] * (1 - a)];
+
+      // véu geral da cena (.veil::after)
+      cor = mistura(cor, T.veilRGB, T.veilCena);
+
+      // camadas locais sob o bloco de texto (do fundo para a frente)
+      for (var c = T.camadas.length - 1; c >= 0; c--) {
+        var cam = T.camadas[c], av;
+        if (typeof cam === 'string') av = parseFloat(cam.split(':')[1]);
+        else {
+          var rx = cam[0] * bw, ry = cam[1] * bh;
+          var cxp = bx + cam[2] * bw, cyp = by + cam[3] * bh;
+          var t = Math.sqrt(Math.pow((x - cxp) / rx, 2) + Math.pow((y - cyp) / ry, 2));
+          av = alfaNaParada(cam[4], Math.min(t, 1));
+        }
+        av *= f;
+        cor = mistura(cor, T.veilRGB, av);
+      }
+
+      var r = razao(cor, T.texto);
+      var r2 = razao(cor, T.texto2);
+      soma += r; n++;
+      if (r2 < pior2) pior2 = r2;
+      if (r < pior) { pior = r; piorEm = [x, y, cor.map(Math.round)]; }
+    }
+  }
+  return '  véu x' + f.toFixed(2) + '  pior ' + pior.toFixed(2) + ':1  média ' +
+         (soma / n).toFixed(1) + ':1  |  micro-texto pior ' + pior2.toFixed(2) + ':1  (pior fundo rgb ' + piorEm[2].join(',') + ')';
+}
+
+function mistura(base, cor, a) {
+  return [base[0] + (cor[0] - base[0]) * a,
+          base[1] + (cor[1] - base[1]) * a,
+          base[2] + (cor[2] - base[2]) * a];
+}
+
+var GEO;
+NeuroBrain.carregar('../assets/cortex-lo.bin', 34000).then(function (geo) {
+  GEO = geo;
+  document.getElementById('out').textContent =
+    'nuvem: ' + geo.count + ' pontos (' + geo.fonte + ')\n' +
+    ['luz', 'noite'].map(function (t) {
+      return t + ':\n' + [1].map(function (f) {
+        return medir(t, f);
+      }).join('\n');
+    }).join('\n\n') + '\n' +
+    '\nmínimo WCAG AA para texto normal: 4.5:1 — para títulos grandes: 3:1';
+}).catch(function (e) {
+  document.getElementById('out').textContent = 'ERRO: ' + e.message;
+});
+</script>

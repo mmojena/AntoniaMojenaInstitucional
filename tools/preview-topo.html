@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="luz">
+<head>
+<meta charset="utf-8">
+<title>prévia — cabeçalho rolado</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  /* Reproduz a situação que dá o problema: a página rolada, com um card
+     passando por baixo do cabeçalho. O markup do cabeçalho é lido do
+     index.html em tempo de execução — assim esta prévia nunca fica desatualizada. */
+  body{ padding:150px 40px 40px; }
+  .rotulo{ font:400 10px/1 var(--f-mono); letter-spacing:.2em; color:var(--txt-dim); margin:0 0 10px; }
+  .cards{ margin-top:-90px; }
+</style>
+</head>
+<body class="is-booted is-scrolled">
+
+<div id="destino"></div>
+
+<script>
+fetch('../index.html').then(function (r) { return r.text(); }).then(function (html) {
+  var doc = new DOMParser().parseFromString(html, 'text/html');
+  var destino = document.getElementById('destino');
+
+  // cabeçalho e navegação, exatamente como estão no site
+  destino.appendChild(doc.querySelector('.hud'));
+  destino.appendChild(doc.querySelector('.nav'));
+
+  // dois cards para o cabeçalho ter algo por baixo, como na tela do usuário
+  var cards = document.createElement('div');
+  cards.className = 'cards';
+  Array.prototype.slice.call(doc.querySelectorAll('.card'), 0, 3).forEach(function (c) {
+    c.classList.add('is-in');
+    cards.appendChild(c);
+  });
+  destino.appendChild(cards);
+
+  // a onda do HUD não roda aqui (o script do site não é carregado)
+  var w = destino.querySelector('#wave');
+  if (w) w.style.visibility = 'hidden';
+});
+</script>
+</body>
+</html>

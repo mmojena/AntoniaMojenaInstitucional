@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>prévia — menu mobile</title>
+<body style="margin:0;background:#EEE;font:11px monospace;display:flex;gap:14px;padding:14px">
+<!-- Abre o menu dentro de iframes de tamanho fixo: assim dá para ver o painel
+     mesmo quando o navegador só compõe um quadro logo após a navegação. -->
+<div><p id="s1">375×812 — claro</p><iframe id="f1" width="375" height="812" style="border:0" src="../index.html"></iframe></div>
+<div><p id="s2">375×812 — noite</p><iframe id="f2" width="375" height="812" style="border:0" src="../index.html"></iframe></div>
+<div><p id="s3">740×360 — deitado</p><iframe id="f3" width="740" height="360" style="border:0" src="../index.html"></iframe></div>
+<script>
+function abre(id, tema, rotulo) {
+  var f = document.getElementById(id);
+  f.onload = function () {
+    var d = f.contentDocument;
+    var t = 0;
+    (function espera() {
+      if (d.body.classList.contains('is-booted') || t > 9000) {
+        d.documentElement.setAttribute('data-theme', tema);
+        var b = d.querySelector('#burger');
+        if (b) b.click();
+        document.getElementById(rotulo).textContent += '  ✓ menu aberto';
+        return;
+      }
+      t += 200; setTimeout(espera, 200);
+    })();
+  };
+}
+abre('f1', 'luz', 's1');
+abre('f2', 'noite', 's2');
+abre('f3', 'luz', 's3');
+</script>

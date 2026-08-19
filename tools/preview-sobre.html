@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="luz">
+<head>
+<meta charset="utf-8">
+<title>prévia — retrato</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  /* Só para a prévia: o site real põe estas seções depois de várias telas de
+     scroll, e aqui o painel do navegador só compõe o topo da página. */
+  body{ padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  .lado{ padding:14px; border-radius:14px; }
+  .scene{ min-height:0; padding:24px 0; }
+  h4{ font:400 11px/1 var(--f-mono); letter-spacing:.2em; color:var(--txt-dim); margin:0 0 8px; }
+  .scene--split{ grid-template-columns:1fr; }
+  .portrait{ width:min(260px,90%); }
+</style>
+</head>
+<body class="is-booted">
+
+<div class="lado" style="background:var(--ink)"><h4>TEMA CLARO</h4>
+<section class="scene scene--split reverse">
+  <div class="scene__col scene__col--media">
+    <figure class="portrait is-in rv">
+      <img src="../assets/antonia.jpg" alt="Antônia Mojena" onerror="this.closest('.portrait').classList.add('is-empty');this.remove()">
+      <span class="portrait__hint mono">a foto entra aqui<br><b>assets/antonia.jpg</b></span>
+      <figcaption class="mono">ANTÔNIA MOJENA · SINOP — MT</figcaption>
+    </figure>
+  </div>
+  <div class="scene__col scene__col--text">
+    <p class="eyebrow mono rv is-in">&gt; SOBRE <i class="caret">_</i></p>
+    <h2 class="title rv is-in">Antônia Mojena</h2>
+    <p class="creds mono rv is-in">NEUROPSICOPEDAGOGA CLÍNICA · NEUROPSICANALISTA CLÍNICA · TERAPEUTA ABA</p>
+    <div class="prose">
+      <p class="rv is-in">Sou graduada em Pedagogia e Teologia, especialista em Neuropsicopedagogia, Neuropsicanálise e Terapia ABA.</p>
+      <p class="rv is-in">Atuo com foco na saúde mental, emocional e comportamental, atendendo crianças, adolescentes e famílias.</p>
+    </div>
+  </div>
+</section></div>
+
+<div class="lado" data-theme="noite" style="background:var(--ink)"><h4>TEMA NOITE</h4>
+  <section class="scene scene--split reverse">
+    <div class="scene__col scene__col--media">
+      <figure class="portrait is-in rv">
+        <img src="../assets/antonia.jpg" alt="Antônia Mojena">
+        <figcaption class="mono">ANTÔNIA MOJENA · SINOP — MT</figcaption>
+      </figure>
+    </div>
+    <div class="scene__col scene__col--text">
+      <p class="eyebrow mono rv is-in">&gt; SOBRE <i class="caret">_</i></p>
+      <h2 class="title rv is-in">Antônia Mojena</h2>
+      <p class="creds mono rv is-in">NEUROPSICOPEDAGOGA CLÍNICA · NEUROPSICANALISTA CLÍNICA · TERAPEUTA ABA</p>
+      <div class="prose">
+        <p class="rv is-in">Atuo com foco na saúde mental, emocional e comportamental, atendendo crianças, adolescentes e famílias.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+</body>
+</html>

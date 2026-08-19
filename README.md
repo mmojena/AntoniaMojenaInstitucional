@@ -1,8 +1,8 @@
 # Antônia Mojena — Landing Page "Monitor Neural"
 
 Landing page de página única inspirada no layer *neural-monitor* do getlayers.ai:
-cérebro em partículas renderizado em **WebGL puro**, HUD de telemetria, cenas
-encadeadas pelo scroll e CTA de WhatsApp em todas as etapas.
+cérebro em partículas renderizado em **WebGL puro**, cenas encadeadas pelo scroll
+e CTA de WhatsApp em todas as etapas.
 
 **Zero dependências** — sem React, sem three.js, sem build. É só abrir o `index.html`.
 
@@ -18,6 +18,13 @@ js/main.js            orquestração das cenas, HUD, menu mobile, revelações, 
 assets/cortex-hi.bin  nuvem de pontos do córtex real — desktop (686 KB)
 assets/cortex-lo.bin  a mesma, reduzida — celular (229 KB)
 tools/build-brain.py  gera os .bin a partir dos STL originais
+tools/calib.html      banco de calibração: varre o ganho do cérebro e mede o resultado
+tools/contraste.html  mede o contraste WCAG do texto sobre o cérebro, por tema
+tools/preview-sobre.html  prévia isolada do retrato nos dois temas
+tools/preview-topo.html   prévia do cabeçalho no estado rolado (lê o markup do index.html)
+tools/preview-menu.html   prévia do menu mobile aberto, nos dois temas
+tools/audit-mobile.html   auditoria de responsividade em 6 tamanhos de tela
+originais/            arquivos originais das imagens (não são servidos)
 ```
 
 ## Como ver
@@ -25,7 +32,7 @@ tools/build-brain.py  gera os .bin a partir dos STL originais
 Basta abrir `index.html` no navegador. Para servir localmente:
 
 ```bash
-python -m http.server 5510
+python3 -m http.server 5510
 ```
 
 ---
@@ -60,12 +67,50 @@ sem cérebro, só com um menos detalhado.
 
 ---
 
+## Os dois temas
+
+A identidade é **roxo (ametista) + dourado**. O site tem dois temas, trocados
+pelo botão redondo no topo (no celular, pela linha no fim do menu):
+
+| | Fundo | O cérebro |
+|---|---|---|
+| **luz** (padrão) | quase branco | **tinta**: mistura normal, roxo profundo sobre claro |
+| **noite** | tinta profunda | **luz**: mistura aditiva, partícula luminosa |
+
+Os dois modos não são a mesma coisa com as cores invertidas. No fundo branco a
+mistura aditiva simplesmente **desaparece** — somar luz ao branco continua branco.
+Por isso `NeuroBrain.prototype.tema()` troca também o `blendFunc` e o ganho por
+partícula, calibrados separadamente (`tools/calib.html`).
+
+A escolha fica salva em `localStorage` (`am-tema`) e é aplicada por um script
+inline no `<head>`, **antes** do CSS pintar — sem piscar o tema errado ao carregar.
+
+**Trocar o padrão para o escuro:** em `index.html`, no script do `<head>`, mude
+`if (t !== 'noite' && t !== 'luz') t = 'luz';` para `t = 'noite';`, e o
+`data-theme="luz"` da tag `<html>`.
+
+**Mexer nas cores:** tudo vive nos dois blocos de variáveis no topo de
+`css/styles.css` — `:root` (tema claro) e `[data-theme="noite"]`. Nenhuma cor
+literal aparece no resto do arquivo; mudar a identidade é mexer nesses dois blocos.
+
+---
+
 ## O que você precisa colocar em `assets/`
 
 | Arquivo | Uso | Se faltar |
 |---|---|---|
 | `assets/logo.png` | Logo original (assinatura + cérebro colorido) no topo | Cai para a assinatura em fonte script |
-| `assets/antonia.jpg` | Retrato da seção "Sobre mim" (vertical, ~800×1000) | Mostra uma moldura com aviso |
+| `assets/antonia.jpg` | Retrato da seção "Sobre mim" | Mostra uma moldura com aviso |
+
+O retrato já está no lugar: 880×1322, JPG qualidade 78, 197 KB. A moldura tem no
+máximo 400 px de largura, então 880 px cobre telas de alta densidade com folga. O
+arquivo original (PNG de 1,8 MB) ficou em `originais/antonia-original.png` — se
+precisar de outro recorte, é dele que se parte:
+
+```bash
+sips -s format jpeg -s formatOptions 78 --resampleWidth 880 \
+  originais/antonia-original.png --out assets/antonia.jpg
+```
 
 É só soltar os arquivos com esses nomes — o site detecta sozinho, sem editar código.
 
@@ -73,9 +118,41 @@ sem cérebro, só com um menos detalhado.
 
 ## Onde editar as informações
 
-**WhatsApp** — o número aparece em 5 links. Para trocar, substitua `5566992007061`
-no `index.html` (formato: 55 + DDD + número, sem espaços ou traços). A mensagem
-pré-preenchida vem depois de `?text=` e precisa estar codificada para URL.
+**WhatsApp** — o número aparece em 5 links (`wa.me/5566992007061`) e mais uma vez
+na barra do topo (`tel:+5566992007061`). Para trocar, substitua o número no
+`index.html` — formato: 55 + DDD + número, sem espaços ou traços.
+
+Cada botão abre a conversa com uma **mensagem diferente**, escrita para o momento
+em que a pessoa clicou:
+
+| Onde | O que já vem escrito |
+|---|---|
+| Primeira dobra | fala que se identificou com o atendimento e pede horários |
+| "Como funciona" | diz que estava lendo essa parte e ficou com uma dúvida |
+| Fim da página | diz que leu o site inteiro e quer dar o próximo passo |
+| Botão flutuante e menu | versão curta e direta, só pedindo horários |
+
+A mensagem vem depois de `?text=` e precisa estar **codificada para URL** (espaço
+vira `%20`, acento vira `%C3%A1` e assim por diante). Para gerar uma nova sem
+errar a codificação, no terminal:
+
+```bash
+python3 -c "from urllib.parse import quote; print('https://wa.me/5566992007061?text='+quote(input('mensagem: ')))"
+```
+
+**Abertura** — a tela de carregamento é o `#boot` no `index.html`; as frases que
+passam nela ficam no array `MSGS` em `js/main.js`. A saída é coreografada em duas
+etapas: o bloco central sobe e desfoca, a cortina se dissolve logo atrás, e os
+textos da primeira dobra só então começam a subir — por isso as revelações ficam
+travadas (`revelando`) até o boot terminar.
+
+**Cabeçalho ao rolar** — passando de 24px de scroll, o `body` ganha `is-scrolled`
+e a faixa do topo fica opaca com desfoque. Sem isso a assinatura flutua por cima
+do conteúdo que passa por baixo e parece defeito.
+
+**Barra do topo** — o `<header class="hud">` no `index.html`. Hoje mostra agenda,
+tipo de atendimento, público, cidade e telefone. Cada `<span class="hud__cell">`
+some sozinho conforme a tela aperta; o telefone é o último a sair.
 
 **Telefone exibido / cidade / horário** — seção `id="contato"` e o rodapé do menu mobile.
 
@@ -83,7 +160,7 @@ pré-preenchida vem depois de `?text=` e precisa estar codificada para URL.
 `<!-- ==== NN — NOME ==== -->`.
 
 > **Ao editar CSS ou JS, suba o número da versão** nos links do `<head>`
-> (`styles.css?v=6` → `?v=7`). É o que faz o navegador do visitante pegar a
+> (`styles.css?v=17` → `?v=18`). É o que faz o navegador do visitante pegar a
 > versão nova em vez da guardada em cache.
 
 ---
@@ -96,15 +173,32 @@ O site é pensado para o tráfego vindo do WhatsApp, que é majoritariamente mó
 - **Nuvem reduzida** (229 KB em vez de 686 KB) e resolução limitada a 1.6× —
   metade do custo de preenchimento numa GPU de celular.
 - **Cérebro atrás do texto, sem atrapalhar a leitura**: em vez de apagá-lo, cada
-  bloco de texto ganha um véu local em degradê. Contraste medido no título da
-  primeira dobra: 16:1 em média, 4,8:1 no pixel mais claro (acima do mínimo
-  WCAG AA) — mesmo quando uma sinapse estoura em branco bem atrás de uma letra.
+  bloco de texto ganha um véu local em degradê. Medido com `tools/contraste.html`
+  na primeira dobra em 390×780: **17:1 em média**, e no pior pixel **9,8:1 no tema
+  claro** e **8,0:1 no escuro** — bem acima do mínimo WCAG AA de 4,5:1. O véu é
+  diferente em cada tema porque o risco é oposto: no escuro é uma sinapse
+  estourando em branco atrás da letra; no claro é tinta escura sob texto escuro.
 - **Deitado**, a tela volta a ter duas colunas e o cérebro sai de trás do texto.
 - Áreas de toque de 44px+, `env(safe-area-inset-*)` para o notch, e os efeitos de
   *hover* desligados onde não existe cursor (no toque eles ficariam grudados).
 
 Ajuste fino do cérebro no celular: `gain` e `maxDPR` na criação do `NeuroBrain`,
 e a função `sceneParams()` — ambos em `js/main.js`.
+
+### Auditoria
+
+`tools/audit-mobile.html` carrega o site em iframes de tamanho fixo e verifica,
+em cada tela: rolagem lateral, elementos passando da borda, alvos de toque de
+44px, tamanho do texto corrido, se o botão de WhatsApp aparece sem rolar, altura
+do cabeçalho, abertura e fechamento do menu, o alternador de tema dentro dele,
+presença dos links de contato, resolução do canvas e carregamento do retrato.
+
+Última execução — **sem falhas e sem avisos** em 320×568, 360×740, 390×844,
+414×896, 768×1024 e 740×360 (deitado).
+
+> O harness desliga as transições CSS dentro dos iframes antes de medir. Sem
+> isso, um navegador que não esteja compondo quadros (aba em segundo plano)
+> devolve sempre a opacidade inicial e a auditoria acusa falhas que não existem.
 
 ---
 
@@ -126,8 +220,10 @@ Toda a coreografia vive no array `SCENES` em `js/main.js` — uma linha por seç
 Os valores são interpolados suavemente entre cenas: cada seção "segura" seu
 estado nos primeiros 45% e faz a transição no restante do scroll.
 
-**Cor das partículas:** `colA` (corpo, sálvia) e `colB` (bordas, dourado) —
-valores RGB de 0 a 1, em `js/main.js`.
+**Cor das partículas:** o objeto `PALETA` em `js/main.js`, uma entrada por tema —
+`colA` (corpo), `colB` (bordas), `flash` (o disparo sináptico) e `gain` (brilho
+por partícula, com valor próprio para celular, onde a nuvem é menor). Valores RGB
+de 0 a 1. Ao mexer neles, confira o resultado em `tools/calib.html`.
 
 ---
 

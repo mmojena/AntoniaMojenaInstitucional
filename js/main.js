@@ -10,6 +10,7 @@
   var lerp  = function (a, b, t) { return a + (b - a) * t; };
   var smooth = function (t) { return t * t * (3 - 2 * t); };
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var corDaOnda = null;   // cor da onda do HUD; zerada quando o tema muda
 
   /* Em abas em segundo plano innerWidth/innerHeight podem valer 0 no carregamento:
      sem estes fallbacks o site ficaria preso no layout móvel. */
@@ -24,12 +25,40 @@
   var isSmall = small();
   var brain = null;
 
+  /* Paletas do cérebro, uma por tema.
+     noite — partícula LUMINOSA sobre tinta escura, mistura aditiva: o corpo é
+             roxo e a silhueta puxa para o dourado.
+     luz   — o aditivo desaparece no branco, então a partícula vira TINTA:
+             mistura normal, roxo profundo, e cada partícula precisa de muito
+             menos opacidade porque agora elas se somam por cobertura. */
+  var PALETA = {
+    noite: {
+      modo: 'aditivo',
+      // verde baixo de propósito: no aditivo o canal que satura primeiro define a
+      // cor do estouro, e com verde alto o corpo lavava para branco
+      colA:  [0.50, 0.24, 0.95],
+      colB:  [0.98, 0.84, 0.56],
+      flash: [1.00, 0.95, 0.88],
+      gain:  isSmall ? 2.20 : 0.75
+    },
+    luz: {
+      modo: 'luz',
+      colA:  [0.29, 0.11, 0.56],
+      colB:  [0.46, 0.30, 0.12],
+      flash: [0.62, 0.20, 0.86],
+      gain:  isSmall ? 2.60 : 1.90
+    }
+  };
+
+  var temaAtual = document.documentElement.getAttribute('data-theme') === 'noite' ? 'noite' : 'luz';
+
   try {
     brain = new window.NeuroBrain(canvas, {
-      colA: [0.30, 0.74, 0.45],
-      colB: [0.98, 0.86, 0.58],
+      colA: PALETA[temaAtual].colA,
+      colB: PALETA[temaAtual].colB,
+      flash: PALETA[temaAtual].flash,
       // celular tem menos partículas: cada uma brilha mais para o corpo ficar igual
-      gain: isSmall ? 2.0 : 0.85,
+      gain: PALETA[temaAtual].gain,
       maxDPR: isSmall ? 1.6 : 2
     });
   } catch (e) { brain = null; }
@@ -45,8 +74,17 @@
     : Promise.resolve(null);
 
   // o canvas pode ser medido antes do layout (aba em segundo plano, fontes, etc.)
+  /* O canvas ocupa a viewport inteira, então observá-lo cobre também os casos em
+     que o 'resize' da janela não dispara: aba aberta em segundo plano, painel de
+     preview oculto, restauração de sessão. Sem refazer as cenas aqui, a página
+     que nasce com largura 0 fica presa no layout móvel mesmo depois de aparecer. */
   if (hasBrain && 'ResizeObserver' in window) {
-    new ResizeObserver(function () { brain.resize(); }).observe(canvas);
+    new ResizeObserver(function () {
+      brain.resize();
+      measure();
+      applyScroll();
+      garanteVisiveis();
+    }).observe(canvas);
   }
 
   /* Estados por cena. offX/offY em coordenadas de tela (-1 a 1). */
@@ -95,7 +133,6 @@
   var progEl = $('#sceneProg');
   var veilEl = $('.veil');
   var waFloat = $('.wa-float');
-  var focusEl = $('#hudFocus');
   var bounds = [];
   var current = -1; // força a primeira aplicação de dot/menu/foco
 
@@ -128,6 +165,7 @@
   var target = Object.assign({}, SCENES[0]);
 
   function applyScroll() {
+    if (!bounds.length) measure();
     var s = sceneAt();
     var a = sceneParams(Math.floor(s.f));
     var b = sceneParams(Math.min(Math.floor(s.f) + 1, SCENES.length - 1));
@@ -157,11 +195,10 @@
       navLinks.forEach(function (l) {
         l.classList.toggle('is-active', l.getAttribute('href') === NAV_FOR[id]);
       });
-      var f = sections[current].getAttribute('data-focus');
-      if (f && focusEl) focusEl.textContent = f;
     }
 
     if (waFloat) waFloat.classList.toggle('is-on', window.scrollY > vh() * 0.55);
+    document.body.classList.toggle('is-scrolled', window.scrollY > 24);
   }
 
   var ticking = false;
@@ -176,6 +213,7 @@
     measure();
     if (hasBrain) brain.resize();
     applyScroll();
+    garanteVisiveis();
   });
 
   /* =======================================================
@@ -187,15 +225,44 @@
     el.style.transitionDelay = (d * 85) + 'ms';
   });
 
-  if ('IntersectionObserver' in window && !reduced) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-    revs.forEach(function (el) { io.observe(el); });
-  } else {
-    revs.forEach(function (el) { el.classList.add('is-in'); });
+  var io = null;
+
+  /* Rede de segurança do IntersectionObserver: ele só avisa quando há interseção,
+     e se a página nasce com viewport de tamanho zero — aba restaurada em segundo
+     plano, webview embutida (o navegador do WhatsApp, que é de onde vem a maior
+     parte do tráfego), painel de preview oculto — nada intersecta e o texto fica
+     invisível para sempre. Aqui revelamos à força tudo que já está na tela. */
+  var revelando = false;   // só depois que a abertura sai
+
+  function garanteVisiveis() {
+    if (!revs || !revelando) return;   // observadores podem chamar antes da hora
+    var limite = vh() * 1.15;
+    revs.forEach(function (el) {
+      if (el.classList.contains('is-in')) return;
+      var r = el.getBoundingClientRect();
+      if (r.top < limite) {
+        el.classList.add('is-in');
+        if (io) io.unobserve(el);
+      }
+    });
+  }
+
+  /* As revelações só começam quando a abertura sai. Se o observador entrasse em
+     ação durante o carregamento, o texto da primeira dobra já estaria posto
+     atrás da cortina e a entrada aconteceria sem ninguém ver. */
+  function iniciaRevelacoes() {
+    revelando = true;
+    if ('IntersectionObserver' in window && !reduced) {
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      revs.forEach(function (el) { io.observe(el); });
+    } else {
+      revs.forEach(function (el) { el.classList.add('is-in'); });
+    }
+    garanteVisiveis();
   }
 
   /* =======================================================
@@ -229,6 +296,46 @@
   }
 
   /* =======================================================
+     3c. TEMA (claro / escuro)
+     O tema inicial já foi aplicado por um script inline no <head> — aqui só
+     tratamos a troca: atributo, preferência salva, cor da barra do navegador,
+     paleta do cérebro e cor da onda do HUD.
+     ======================================================= */
+  var temaBtns = [$('#temaBtn'), $('#temaBtnMob')].filter(Boolean);
+  var metaCor = $('meta[name="theme-color"]');
+  var COR_BARRA = { luz: '#FBF8FE', noite: '#08060F' };
+
+  function aplicaTema(t, comBrilho) {
+    temaAtual = (t === 'noite') ? 'noite' : 'luz';
+    document.documentElement.setAttribute('data-theme', temaAtual);
+    if (metaCor) metaCor.setAttribute('content', COR_BARRA[temaAtual]);
+    try { localStorage.setItem('am-tema', temaAtual); } catch (e) {}
+
+    if (hasBrain) brain.tema(PALETA[temaAtual]);
+    corDaOnda = null; // recalculada no próximo quadro a partir do CSS
+
+    var rotulo = temaAtual === 'noite' ? 'Tema claro' : 'Tema escuro';
+    temaBtns.forEach(function (b) {
+      var txt = $('.temaLinha__txt', b);
+      if (txt) txt.textContent = rotulo;
+      b.setAttribute('title', rotulo);
+      if (b.id === 'temaBtn') b.setAttribute('aria-label', rotulo);
+    });
+    if (comBrilho && hasBrain) {
+      // um pulso curto ao trocar: o cérebro "respira" para marcar a transição
+      brain.p.disperse = Math.min(0.5, brain.p.disperse + 0.12);
+    }
+  }
+
+  temaBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      aplicaTema(temaAtual === 'noite' ? 'luz' : 'noite', true);
+    });
+  });
+
+  aplicaTema(temaAtual, false);
+
+  /* =======================================================
      4. PARALLAX DO CURSOR
      ======================================================= */
   if (hasBrain && !reduced) {
@@ -239,27 +346,8 @@
   }
 
   /* =======================================================
-     5. HUD — leituras vivas
+     5. ONDA DO CABEÇALHO
      ======================================================= */
-  var partsEl = $('#hudParts');
-  var fireEl = $('#hudFire');
-
-  function contaParticulas(nParts) {
-    if (!partsEl) return;
-    var t0 = null;
-    (function count(ts) {
-      if (!t0) t0 = ts || 0;
-      var p = clamp(((ts || 0) - t0) / 1400, 0, 1);
-      partsEl.textContent = Math.round(nParts * (1 - Math.pow(1 - p, 3))).toLocaleString('pt-BR');
-      if (p < 1) requestAnimationFrame(count);
-    })();
-  }
-
-  var fireVal = 4.2;
-  setInterval(function () {
-    fireVal = clamp(fireVal + (Math.random() - 0.5) * 0.6, 3.1, 6.4);
-    if (fireEl) fireEl.textContent = fireVal.toFixed(2).replace('.', ',') + ' M/S';
-  }, 900);
 
   /* onda tipo EEG */
   var wave = $('#wave');
@@ -278,7 +366,11 @@
         var y = H / 2 - (n + spike) * H * 0.42;
         x === 0 ? wctx.moveTo(x, y) : wctx.lineTo(x, y);
       }
-      wctx.strokeStyle = 'rgba(143,178,124,.85)';
+      if (!corDaOnda) {
+        corDaOnda = getComputedStyle(document.documentElement)
+          .getPropertyValue('--brand').trim() || '#6A34B4';
+      }
+      wctx.strokeStyle = corDaOnda;
       wctx.lineWidth = 1;
       wctx.stroke();
       requestAnimationFrame(drawWave);
@@ -293,9 +385,9 @@
   var bootPct = $('#bootPct');
   var bootMsg = $('#bootMsg');
   var MSGS = [
-    'INICIANDO MONITOR NEURAL',
-    'CARREGANDO MALHA CORTICAL',
-    'CALIBRANDO SINAPSES',
+    'PREPARANDO O ESPAÇO',
+    'CADA HISTÓRIA É ÚNICA',
+    'ESCUTA SEM JULGAMENTOS',
     'ACOLHIMENTO E PROPÓSITO'
   ];
 
@@ -320,7 +412,9 @@
     document.body.classList.add('is-booted');
     if (boot) boot.classList.add('is-done');
     if (canvas) canvas.classList.add('is-live');
-    setTimeout(function () { if (boot && boot.parentNode) boot.parentNode.removeChild(boot); }, 1400);
+    // o texto sobe enquanto a cortina se dissolve, não depois dela
+    setTimeout(iniciaRevelacoes, reduced ? 0 : 220);
+    setTimeout(function () { if (boot && boot.parentNode) boot.parentNode.removeChild(boot); }, 1800);
   }
 
   /* =======================================================
@@ -336,7 +430,11 @@
     requestAnimationFrame(loop);
   }
 
-  document.addEventListener('visibilitychange', function () { running = !document.hidden; last = performance.now(); });
+  document.addEventListener('visibilitychange', function () {
+    running = !document.hidden;
+    last = performance.now();
+    if (running) { if (hasBrain) brain.resize(); measure(); applyScroll(); garanteVisiveis(); }
+  });
 
   /* =======================================================
      8. INÍCIO
@@ -354,7 +452,6 @@
       brain.build(geo);
       brain.resize();
       applyScroll();
-      contaParticulas(brain.count);
     }
   }).catch(function (e) { console.warn('cerebro indisponivel:', e); });
 

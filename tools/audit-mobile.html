@@ -1,0 +1,224 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>auditoria mobile</title>
+<body style="background:#fff;margin:0;font:12px/1.5 monospace">
+<pre id="out">carregando…</pre>
+<div id="palco" style="position:absolute;left:-9999px;top:0"></div>
+<script>
+/* Auditoria de responsividade sem depender do navegador compor a tela: cada
+   tamanho de tela vira um <iframe> com largura e altura FIXAS em pixels, então
+   o layout acontece de verdade mesmo com o painel de preview oculto. */
+
+var TELAS = [
+  { nome: 'iPhone SE      ', w: 320, h: 568 },
+  { nome: 'Android comum  ', w: 360, h: 740 },
+  { nome: 'iPhone 14      ', w: 390, h: 844 },
+  { nome: 'iPhone Plus    ', w: 414, h: 896 },
+  { nome: 'iPad retrato   ', w: 768, h: 1024 },
+  { nome: 'celular deitado', w: 740, h: 360 }
+];
+
+var ALVO_TOQUE = 44;   // mínimo recomendado (WCAG 2.5.5 / Apple HIG)
+
+function carrega(t) {
+  return new Promise(function (resolve) {
+    var f = document.createElement('iframe');
+    f.width = t.w; f.height = t.h;
+    f.style.cssText = 'border:0;width:' + t.w + 'px;height:' + t.h + 'px';
+    f.src = '../index.html?audit=' + t.w;
+    f.onload = function () {
+      var d = f.contentDocument, w = f.contentWindow;
+
+      /* Transições desligadas dentro do iframe. Sem isto a medição depende de o
+         navegador estar compondo quadros — com o painel oculto ele congela e
+         tudo aparece com a opacidade inicial, gerando falha fantasma. O que
+         auditamos aqui é o estado final do layout, não a animação. */
+      var st = d.createElement('style');
+      st.textContent = '*,*::before,*::after{transition-duration:0s !important;animation-duration:.001s !important}';
+      d.head.appendChild(st);
+
+      var esperou = 0;
+      (function espera() {
+        var pronto = d.body.classList.contains('is-booted') &&
+                     d.querySelectorAll('.rv.is-in').length > 3;
+        if (pronto || esperou > 9000) return resolve({ t: t, f: f, d: d, w: w });
+        esperou += 250;
+        setTimeout(espera, 250);
+      })();
+    };
+    document.getElementById('palco').appendChild(f);
+  });
+}
+
+function visivel(el, w) {
+  var s = w.getComputedStyle(el);
+  if (s.display === 'none' || s.visibility === 'hidden') return false;
+  var r = el.getBoundingClientRect();
+  return r.width > 0 && r.height > 0;
+}
+
+function espera(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+async function checa(ctx) {
+  var d = ctx.d, w = ctx.w, t = ctx.t, falhas = [], avisos = [], notas = [];
+
+  /* 1. estouro horizontal. O teste que vale é o dedo: dá para arrastar a página
+        para o lado? scrollWidth sozinho mente aqui — o body tem overflow-x:hidden
+        e a barra de rolagem do iframe ocupa 8px que num celular não existem. */
+  var viewport = d.documentElement.clientWidth;
+  d.documentElement.scrollLeft = 9999;
+  w.scrollTo(9999, w.scrollY);
+  var arrastou = Math.max(d.documentElement.scrollLeft, d.body.scrollLeft, w.scrollX);
+  d.documentElement.scrollLeft = 0; w.scrollTo(0, w.scrollY);
+
+  if (arrastou > 1) {
+    falhas.push('a página arrasta ' + Math.round(arrastou) + 'px para o lado');
+  }
+  // quem passa da borda, mesmo que o clipping esconda
+  var culpados = [];
+  Array.prototype.forEach.call(d.querySelectorAll('body *'), function (el) {
+    if (!visivel(el, w)) return;
+    var st = w.getComputedStyle(el);
+    if (st.position === 'fixed') return;              // não geram rolagem
+    var r = el.getBoundingClientRect();
+    if (r.right > viewport + 1.5 || r.left < -1.5) {
+      culpados.push((el.tagName.toLowerCase() + '.' + (el.className || '').split(' ')[0]).slice(0, 40) +
+                    ' [' + Math.round(r.left) + '…' + Math.round(r.right) + ']');
+    }
+  });
+  if (culpados.length) avisos.push('passam da borda (clipados): ' + culpados.slice(0, 5).join(' | '));
+
+  /* 2. alvos de toque */
+  var pequenos = [];
+  Array.prototype.forEach.call(d.querySelectorAll('a, button'), function (el) {
+    if (!visivel(el, w)) return;
+    var r = el.getBoundingClientRect();
+    var menor = Math.min(r.width, r.height);
+    if (menor < ALVO_TOQUE) {
+      pequenos.push((el.id || el.className || el.tagName).toString().slice(0, 30) +
+                    ' ' + Math.round(r.width) + '×' + Math.round(r.height));
+    }
+  });
+  if (pequenos.length) avisos.push('alvos < ' + ALVO_TOQUE + 'px: ' + pequenos.join(' | '));
+
+  /* 3. tamanho de fonte do texto corrido */
+  var miudos = [];
+  Array.prototype.forEach.call(d.querySelectorAll('.lede, .prose p, .card p, .checklist p, .steps p'), function (el) {
+    if (!visivel(el, w)) return;
+    var fs = parseFloat(w.getComputedStyle(el).fontSize);
+    if (fs < 14) miudos.push(el.className + ' ' + fs + 'px');
+  });
+  if (miudos.length) avisos.push('texto corrido < 14px: ' + miudos.slice(0, 4).join(' | '));
+
+  /* 4. a primeira dobra cabe na tela? */
+  var cta = d.querySelector('#inicio .btn--primary');
+  if (cta) {
+    var rb = cta.getBoundingClientRect();
+    if (rb.bottom > t.h) falhas.push('CTA da primeira dobra fica abaixo da linha d\'água (' +
+                                     Math.round(rb.bottom) + ' > ' + t.h + ')');
+    else notas.push('CTA visível sem rolar (base em ' + Math.round(rb.bottom) + '/' + t.h + ')');
+  } else falhas.push('CTA da primeira dobra não encontrado');
+
+  /* 5. cabeçalho não pode comer a tela */
+  var nav = d.querySelector('.nav'), hud = d.querySelector('.hud');
+  if (nav && hud) {
+    var alt = nav.getBoundingClientRect().bottom;
+    if (alt > t.h * 0.28) avisos.push('cabeçalho ocupa ' + Math.round(100 * alt / t.h) + '% da altura');
+    else notas.push('cabeçalho ocupa ' + Math.round(100 * alt / t.h) + '% da altura');
+  }
+
+  /* 6. menu mobile: abre, cobre a tela, fecha */
+  var burger = d.querySelector('#burger'), menu = d.querySelector('#menuMobile');
+  var precisaMenu = t.w < 900;
+  if (precisaMenu) {
+    if (!burger || !visivel(burger, w)) falhas.push('sem botão de menu numa tela de ' + t.w + 'px');
+    else {
+      burger.click();
+      await espera(120);   // transições desligadas: só o tempo de aplicar a classe
+      var aberto = d.body.classList.contains('is-menu');
+      var rm = menu.getBoundingClientRect();
+      var opac = parseFloat(w.getComputedStyle(menu).opacity);
+      if (!aberto || opac < 0.9) falhas.push('menu não abriu (classe ' + aberto + ', opacidade ' + opac + ')');
+      else {
+        // todos os links do menu cabem na tela?
+        var fora = [];
+        Array.prototype.forEach.call(menu.querySelectorAll('a, button'), function (a) {
+          var r = a.getBoundingClientRect();
+          if (r.bottom > t.h + 1 || r.top < -1) fora.push(a.textContent.trim().slice(0, 18) +
+                                                          ' [' + Math.round(r.top) + '…' + Math.round(r.bottom) + ']');
+        });
+        var rolavel = menu.scrollHeight > menu.clientHeight + 1;
+        if (fora.length && !rolavel) falhas.push('itens do menu fora da tela e o menu não rola: ' + fora.join(' | '));
+        else if (fora.length) notas.push('menu rola (' + fora.length + ' itens abaixo da dobra)');
+        else notas.push('menu inteiro cabe na tela');
+
+        // o alternador de tema dentro do menu
+        var tm = d.querySelector('#temaBtnMob');
+        if (!tm || !visivel(tm, w)) avisos.push('alternador de tema não aparece no menu');
+        else {
+          var antes = d.documentElement.getAttribute('data-theme');
+          tm.click();
+          await espera(120);
+          var depois = d.documentElement.getAttribute('data-theme');
+          if (antes === depois) falhas.push('alternador de tema do menu não troca o tema');
+          else { notas.push('tema troca pelo menu (' + antes + ' → ' + depois + ')'); tm.click(); }
+        }
+      }
+      burger.click();
+      await espera(120);
+      if (d.body.classList.contains('is-menu')) falhas.push('menu não fecha');
+    }
+  }
+
+  /* 7. WhatsApp e telefone acessíveis */
+  var wa = d.querySelector('.wa-float');
+  if (wa) {
+    var rw = wa.getBoundingClientRect();
+    if (rw.right > viewport + 1 || rw.bottom > t.h + 1) falhas.push('botão flutuante fora da tela');
+  }
+  var links = d.querySelectorAll('a[href^="https://wa.me/"]').length;
+  var tel = d.querySelectorAll('a[href^="tel:"]').length;
+  if (!links) falhas.push('nenhum link de WhatsApp');
+  notas.push(links + ' links de WhatsApp, ' + tel + ' de telefone');
+
+  /* 8. o cérebro cobre a tela e não estoura */
+  var cv = d.querySelector('#brain');
+  if (cv) {
+    var rc = cv.getBoundingClientRect();
+    if (Math.abs(rc.width - viewport) > 2) avisos.push('canvas com ' + Math.round(rc.width) + 'px numa tela de ' + viewport);
+    var razao = cv.width / Math.max(rc.width, 1);
+    notas.push('canvas ' + cv.width + '×' + cv.height + ' (DPR efetivo ' + razao.toFixed(2) + ')');
+  }
+
+  /* 9. a foto carregou */
+  var foto = d.querySelector('.portrait img');
+  if (!foto) falhas.push('retrato não carregou (caiu no aviso da moldura)');
+  else notas.push('retrato ' + foto.naturalWidth + '×' + foto.naturalHeight +
+                  ' exibido a ' + Math.round(foto.getBoundingClientRect().width) + 'px');
+
+  /* 10. área segura do iPhone */
+  var wf = wa && parseFloat(w.getComputedStyle(wa).bottom);
+  if (wa && wf < 16) avisos.push('botão flutuante muito colado na borda inferior (' + wf + 'px)');
+
+  return { falhas: falhas, avisos: avisos, notas: notas };
+}
+
+var linhas = [];
+TELAS.reduce(function (p, t) {
+  return p.then(function () {
+    return carrega(t).then(function (ctx) { return checa(ctx).then(function (r) {
+      linhas.push('┌─ ' + t.nome + '  ' + t.w + '×' + t.h);
+      r.falhas.forEach(function (x) { linhas.push('│ ✗ ' + x); });
+      r.avisos.forEach(function (x) { linhas.push('│ ! ' + x); });
+      r.notas.forEach(function (x) { linhas.push('│ · ' + x); });
+      linhas.push('└─ ' + (r.falhas.length ? r.falhas.length + ' FALHA(S)' : 'sem falhas') +
+                  (r.avisos.length ? ', ' + r.avisos.length + ' aviso(s)' : '') + '\n');
+      document.getElementById('out').textContent = linhas.join('\n');
+      ctx.f.remove();
+    }); });
+  });
+}, Promise.resolve()).then(function () {
+  linhas.push('=== fim ===');
+  document.getElementById('out').textContent = linhas.join('\n');
+});
+</script>

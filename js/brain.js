@@ -209,22 +209,24 @@
   /* ---------- peças montadas em volta do córtex real ----------
      A malha do NIH é só a superfície pial (córtex). Cerebelo, tronco,
      volume interno e poeira entram aqui, dimensionados para encaixar nela. */
-  var CEREBELO = { c: [0, -0.56, -0.45], r: [0.40, 0.19, 0.28] };
-  var TRONCO2  = { y0: -0.34, y1: -1.04, z0: -0.20, z1: -0.16, r0: 0.135, r1: 0.055 };
+  var CEREBELO = { c: [0, -0.47, -0.50], r: [0.41, 0.195, 0.29] };
+  var TRONCO2  = { y0: -0.30, y1: -1.02, z0: -0.26, z1: -0.20, r0: 0.135, r1: 0.055 };
 
   function montaExtras(escreve, nCbl, nStem, nDust) {
     // cerebelo com fólias horizontais apertadas
     for (var i = 0; i < nCbl; i++) {
       var d = dir();
-      var casca = rnd() < 0.78;
-      var k = casca ? (0.96 + rnd() * 0.04) : Math.pow(rnd(), 0.4) * 0.92;
+      var casca = rnd() < 0.82;
+      var k = casca ? (0.965 + rnd() * 0.035) : Math.pow(rnd(), 0.4) * 0.92;
       var folia = 1 + 0.055 * Math.sin(d[1] * 34 + d[2] * 5);
       var x = CEREBELO.c[0] + d[0] * CEREBELO.r[0] * k * folia;
       var y = CEREBELO.c[1] + d[1] * CEREBELO.r[1] * k * folia;
       var z = CEREBELO.c[2] + d[2] * CEREBELO.r[2] * k * folia;
+      // a face superior encosta no córtex: some com ela para não empastar a junção
+      if (y > -0.40 && rnd() < 0.55) continue;
       var nx = d[0] / CEREBELO.r[0], ny = d[1] / CEREBELO.r[1], nz = d[2] / CEREBELO.r[2];
       var nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-      escreve(x, y, z, nx / nl, ny / nl, nz / nl, rnd(), casca ? 0.66 + rnd() * 0.22 : 0.18 + rnd() * 0.16);
+      escreve(x, y, z, nx / nl, ny / nl, nz / nl, rnd(), casca ? 0.72 + rnd() * 0.24 : 0.20 + rnd() * 0.18);
     }
 
     // tronco encefálico: cápsula cônica preenchida
@@ -259,9 +261,12 @@
       var qp = new Int16Array(buf, 12, nCortex * 3);
       var qn = new Int8Array(buf, 12 + nCortex * 6, nCortex * 3);
 
+      /* O cerebelo é pequeno em volume mas fica na base, onde a luz principal
+         quase não bate: precisa de mais partículas por área para ler com o mesmo
+         peso do córtex. Idem o tronco. */
       var nInner = Math.round(nCortex * 0.18);
-      var nCbl   = Math.round(nCortex * 0.10);
-      var nStem  = Math.round(nCortex * 0.04);
+      var nCbl   = Math.round(nCortex * 0.20);
+      var nStem  = Math.round(nCortex * 0.06);
       var nDust  = Math.round(nCortex * 0.04);
       var total  = nCortex + nInner + nCbl + nStem + nDust;
 
@@ -305,7 +310,7 @@
     'uniform mat3 uRot;',
     'uniform float uTime, uScale, uAspect, uSize, uDisperse, uDPR, uCamZ, uFocusMix, uGain;',
     'uniform vec2 uOffset;',
-    'uniform vec3 uColA, uColB;',
+    'uniform vec3 uColA, uColB, uFlash;',
     'varying vec4 vCol;',
     'void main(){',
     '  vec3 p = aPos;',
@@ -323,17 +328,23 @@
     '  float fire = exp(-ph*7.0);',
     '  float rim = 1.0 - abs(rn.z);',
     '  float depth = smoothstep(uCamZ+1.6, uCamZ-1.1, z);',
-    // luz difusa vinda de cima/esquerda/frente: é ela que revela os giros
-    '  float dif = max(0.0, dot(rn, normalize(vec3(-0.42, 0.52, 0.74))));',
+    /* Luz principal de cima/esquerda/frente — é ela que revela os giros. Meia-Lambert
+       (0.5+0.5*dot) em vez de Lambert puro: com o corte em zero, tudo que olha para
+       baixo — lobo temporal, base e cerebelo — apagava e a metade inferior do cérebro
+       parecia rarefeita, quando na verdade é a parte mais densa da nuvem. */
+    '  float ndl = dot(rn, normalize(vec3(-0.42, 0.52, 0.74)));',
+    '  float dif = pow(ndl*0.5 + 0.5, 1.55);',
+    // preenchimento fraco por baixo/atrás: separa o cerebelo da sombra do occipital
+    '  float fill = max(0.0, dot(rn, normalize(vec3(0.30, -0.72, -0.36)))) * 0.30;',
     '  gl_PointSize = uSize * persp * uDPR * (0.55 + aSeed.y*0.75) * (1.0 + fire*1.3);',
     // superfície inteira visível (antes só a silhueta acendia — virava bolha oca).
     // A borda já fica naturalmente mais densa pelo acúmulo tangente: não a reforçamos.
-    '  float a = aSeed.y * (0.16 + dif*0.70 + rim*0.30) * (0.30 + depth*0.85) * uGain;',
+    '  float a = aSeed.y * (0.11 + dif*0.66 + fill + rim*0.26) * (0.30 + depth*0.85) * uGain;',
     '  a *= 1.0 + fire*1.5;',
-    // dourado nas bordas da silhueta; o corpo permanece sálvia
+    // segunda cor nas bordas da silhueta; o corpo permanece na cor principal
     '  float mixv = clamp(pow(rim, 2.2)*0.72 + aSeed.x*0.08 + uFocusMix, 0.0, 0.88);',
     '  vec3 col = mix(uColA, uColB, mixv);',
-    '  col = mix(col, vec3(1.0, 0.95, 0.85), fire*0.35);',
+    '  col = mix(col, uFlash, fire*0.35);',
     '  vCol = vec4(col, clamp(a, 0.0, 1.0));',
     '}'
   ].join('\n');
@@ -389,7 +400,7 @@
     });
 
     this.u = {};
-    ['uRot','uTime','uScale','uAspect','uSize','uDisperse','uDPR','uCamZ','uOffset','uColA','uColB','uOpacity','uFocusMix','uGain']
+    ['uRot','uTime','uScale','uAspect','uSize','uDisperse','uDPR','uCamZ','uOffset','uColA','uColB','uFlash','uOpacity','uFocusMix','uGain']
       .forEach(function (k) { this.u[k] = gl.getUniformLocation(prog, k); }, this);
 
     gl.disable(gl.DEPTH_TEST);
@@ -405,11 +416,25 @@
     this.pointer = { x: 0, y: 0, tx: 0, ty: 0 };
     this.gain = opts.gain || 1.0;   // brilho por partícula (compensa densidade)
     this.maxDPR = opts.maxDPR || 2;  // teto de resolução (fill-rate no celular)
-    this.colA = opts.colA || [0.30, 0.74, 0.45];  // sálvia profunda
-    this.colB = opts.colB || [0.98, 0.86, 0.58];  // dourado
+    this.colA = opts.colA || [0.55, 0.36, 0.86];  // roxo
+    this.colB = opts.colB || [0.94, 0.83, 0.55];  // dourado
+    this.flash = opts.flash || [1.0, 0.96, 0.90]; // cor do disparo sináptico
     this.ok = true;
     this.resize();
   }
+
+  /* Troca de tema em tempo real.
+     'luz'  — tinta escura sobre fundo claro: mistura NORMAL (o aditivo some no branco).
+     'noite'— partícula luminosa sobre tinta escura: mistura ADITIVA. */
+  NeuroBrain.prototype.tema = function (t) {
+    if (!this.ok) return;
+    var gl = this.gl;
+    this.colA = t.colA; this.colB = t.colB; this.flash = t.flash;
+    if (typeof t.gain === 'number') this.gain = t.gain;
+    if (t.modo === 'luz') gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    else gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    this.modo = t.modo;
+  };
 
   /* Sobe uma nuvem de pontos para a GPU. Pode ser chamado depois do primeiro
      desenho — é assim que a malha real substitui o fallback procedural. */
@@ -484,6 +509,7 @@
     gl.uniform2f(this.u.uOffset, p.offX, p.offY);
     gl.uniform3fv(this.u.uColA, this.colA);
     gl.uniform3fv(this.u.uColB, this.colB);
+    gl.uniform3fv(this.u.uFlash, this.flash);
     gl.drawArrays(gl.POINTS, 0, this.count);
   };
 

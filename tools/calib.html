@@ -1,0 +1,91 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>calibração do cérebro</title>
+<body style="background:#fff;margin:0;font:12px monospace">
+<pre id="out">medindo…</pre>
+<div id="tiras"></div>
+<script src="../js/brain.js"></script>
+<script>
+/* Banco de calibração: canvas de tamanho FIXO (não depende de layout), varre
+   valores de ganho e mede como a nuvem lê depois de composta sobre o fundo. */
+var W = 560, H = 420;
+
+function stats(gl, fundo) {
+  var px = new Uint8Array(W * H * 4);
+  gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  var soma = 0, escuros = 0, cob = 0, min = 255, max = 0, estourado = 0;
+  var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (var i = 0, p = 0; i < px.length; i += 4, p++) {
+    var a = px[i + 3] / 255;
+    // compõe sobre o fundo da página
+    var r = px[i] + fundo[0] * (1 - a),
+        g = px[i + 1] + fundo[1] * (1 - a),
+        b = px[i + 2] + fundo[2] * (1 - a);
+    var lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    soma += lum;
+    if (lum < min) min = lum;
+    if (lum > max) max = lum;
+    if (lum > 235) estourado++;
+    if (a > 0.02) {
+      cob++;
+      var x = p % W, y = (p / W) | 0;
+      if (x < x0) x0 = x; if (x > x1) x1 = x;
+      if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    if (Math.abs(lum - (0.2126 * fundo[0] + 0.7152 * fundo[1] + 0.0722 * fundo[2])) > 40) escuros++;
+  }
+  return {
+    lumMedia: +(soma / (W * H)).toFixed(1),
+    lumMin: +min.toFixed(1),
+    cobertura: +(100 * cob / (W * H)).toFixed(1),
+    contraste: +(100 * escuros / (W * H)).toFixed(2),
+    estouro: +(100 * estourado / (W * H)).toFixed(2),
+    lumMax: +max.toFixed(1),
+    caixa: [x0, y0, x1, y1]
+  };
+}
+
+var PAL = {
+  luz:   { modo: 'luz',     colA: [0.29, 0.11, 0.56], colB: [0.46, 0.30, 0.12], flash: [0.62, 0.20, 0.86] },
+  noite: { modo: 'aditivo', colA: [0.52, 0.30, 0.92], colB: [0.98, 0.84, 0.56], flash: [1.00, 0.95, 0.88] }
+};
+var FUNDO = { luz: [251, 248, 254], noite: [8, 6, 15] };
+
+var ARQ = new URLSearchParams(location.search).get('m') === '1'
+  ? '../assets/cortex-lo.bin' : '../assets/cortex-hi.bin';
+
+NeuroBrain.carregar(ARQ, 86000).then(function (geo) {
+  var linhas = [ARQ + '  pontos: ' + geo.count + '  fonte: ' + geo.fonte, ''];
+  var tiras = document.getElementById('tiras');
+
+  Object.keys(PAL).forEach(function (tema) {
+    var faixa = tema === 'luz' ? [1.9, 2.6, 3.4, 4.4] : [0.34, 0.55, 0.80, 1.10];
+    linhas.push('== ' + tema + ' ==');
+    faixa.forEach(function (g) {
+      var cv = document.createElement('canvas');
+      cv.width = W; cv.height = H;
+      cv.style.cssText = 'width:280px;height:210px;background:' +
+        (tema === 'luz' ? '#FBF8FE' : '#08060F') + ';margin:2px';
+      tiras.appendChild(cv);
+
+      var nb = new NeuroBrain(cv, { gain: g, maxDPR: 1 });
+      nb.canvas.width = W; nb.canvas.height = H;
+      nb.gl.viewport(0, 0, W, H);
+      nb.aspect = W / H;
+      nb.tema(Object.assign({ gain: g }, PAL[tema]));
+      nb.build(geo);
+      // cena 01: três-quartos, cérebro centralizado
+      nb.set({ rotX: 0.12, rotY: 1.15, scale: 1.0, offX: 0, offY: 0, disperse: 0, opacity: 1, size: 2.5, focus: 0 });
+      for (var k = 0; k < 40; k++) nb.frame(0.05); // deixa a suavização assentar
+      var s = stats(nb.gl, FUNDO[tema]);
+      linhas.push('  ganho ' + g.toFixed(2) + '  lum.média ' + s.lumMedia +
+                  '  lum.min ' + s.lumMin + '  cobertura ' + s.cobertura + '%' +
+                  '  contraste>40 ' + s.contraste + '%  estouro ' + s.estouro + '%  lum.max ' + s.lumMax);
+    });
+    linhas.push('');
+  });
+  document.getElementById('out').textContent = linhas.join('\n');
+}).catch(function (e) {
+  document.getElementById('out').textContent = 'ERRO: ' + e.message;
+});
+</script>
